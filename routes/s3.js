@@ -64,7 +64,7 @@ async function getObjectFromS3(s3, bucketName, objectKey) {
 }
 
 // router
-router.post('/s3', async function (req, res, next) {
+router.post('/getVideo', async function (req, res, next) {
 	AWS.config.update({
 		accessKeyId: process.env.AWS_ACCESS_KEY_ID,
 		secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -76,7 +76,7 @@ router.post('/s3', async function (req, res, next) {
 	const s3 = new AWS.S3();
 
 	const bucketName = process.env.AWS_BUCKET_NAME;
-	// TODO: fill in the file
+	// TODO: fill in the video key name
 	const objectKey = '';
 
 	await createS3bucket(s3, bucketName);
@@ -96,3 +96,37 @@ router.post('/s3', async function (req, res, next) {
 });
 
 // TODO: upload object to S3
+router.post(
+	'/updateVideo',
+	async function (req, res, next) {
+		const { video } = req.body;
+		AWS.config.update({
+			accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+			secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+			sessionToken: process.env.AWS_SESSION_TOKEN,
+			region: process.env.AWS_BUCKET_REGION,
+		});
+
+		// Create an S3 client
+		const s3 = new AWS.S3();
+
+		// Specify the S3 bucket and object key
+		const bucketName = process.env.AWS_BUCKET_NAME;
+		// TODO: fill in the video key name
+		const objectKey = '';
+
+		// JSON data to be written to S3
+		const data = {
+			video: video,
+		};
+		await createS3bucket(s3, bucketName);
+		await uploadJsonToS3(
+			s3,
+			bucketName,
+			objectKey,
+			jsonData
+		);
+	}
+);
+
+module.exports = router;
