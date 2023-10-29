@@ -9,8 +9,13 @@
 		<title>CAB432 - Video Transcoding</title>
 		<link rel="stylesheet" href="./style.css" />
 		<script type="module" src="index.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.27.2/axios.min.js"></script>
+		<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.0/dist/ffmpeg.min.js"  crossorigin="anonymous"></script>
 	</head>
 	<body>
+		<script>
+			if (!crossOriginIsolated) SharedArrayBuffer = ArrayBuffer;
+		</script>
 		<div class="content">
 			<h1>Welcome!</h1>
 			<br />
@@ -31,6 +36,10 @@
 						placeholder="Upload a file"
 						accept="video/*"
 					/>
+
+					<video width="320" height="240" style="display:none" controls autoplay>
+						Your browser does not support the video tag.
+					  </video>
 					<h3>Output Settings</h3>
 					<p>
 						<label
@@ -60,40 +69,87 @@
 							id="resolution-title"
 							>Resolutions</label
 						>
-						<div class="resolutionInput">
+						<form id="resolutionInput" class="resolutionInput">
 							<input
+								class="checkBox"
 								type="checkbox"
-								value="360p"
+								value="360"
 								name="360p"
 								style="margin-right: 5px"
 							/>
 							360p
 							<input
+								class="checkBox"
 								type="checkbox"
-								value="480p"
+								value="480"
 								name="480p"
 								style="margin-left: 20px; margin-right: 5px"
 							/>
 							480p
 							<input
+								class="checkBox"
 								type="checkbox"
-								value="720p"
+								value="720"
 								name="720p"
 								style="margin-left: 20px; margin-right: 5px"
 							/>
 							720p
 							<input
+								class="checkBox"
 								type="checkbox"
-								value="1080p"
+								value="1080"
 								name="1080p"
 								style="margin-left: 20px; margin-right: 5px"
+								checked
 							/>
 							1080p
-						</div>
+						</form>
 					</div>
 					<div>
 						<br />
 						<input id="transcodeBtn" type="button" value="Convert" />
+
+						<!-- JS -->
+						<script>
+							const transcodeBtn = document.getElementById('transcodeBtn');
+							transcodeBtn.removeEventListener('click', videoTranscode);
+							transcodeBtn.addEventListener('click', videoTranscode);
+
+							async function videoTranscode () {
+								const videoFileBtn = document.getElementById('video-file');
+								const fileInput = videoFileBtn.files[0];
+
+								const format = document.getElementById('output-format-select').value;
+								console.log(format);
+								let resolution = 1080;
+								const checkBoxes = document.getElementsByClassName('checkBox');
+								for (let i = 0; i < checkBoxes.length; i++) {
+									if (checkBoxes[i].checked) resolution = checkBoxes[i].value;
+								}
+								console.log(resolution);
+								const { createFFmpeg, fetchFile } = FFmpeg;
+								const ffmpeg = createFFmpeg({ log: true });
+								await ffmpeg.load();
+								console.log('ffmpeg load successful');
+								ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(fileInput));
+								await ffmpeg.run('-i', 'input.mp4', '-vf', `scale=-1:${resolution}`, `output.${format}`);
+								const output = ffmpeg.FS('readFile', `output.${format}`);
+								const outputBlob = new Blob([output], { type: `video/${format}` });
+								const outputFile = new File([outputBlob], 'output.mp4', { type: `video/${format}`})
+								const data = new FormData();
+								data.append('file', outputFile, `output.${format}`);
+								const res = await axios.post(
+									`${window.location.href}transcode`, 
+									data,
+									{
+										headers: {
+											'Content-Type': 'multipart/form-data'
+										}
+									}
+								);
+							}
+						</script>
+
 					</div>
 				</div>
 			</div>
