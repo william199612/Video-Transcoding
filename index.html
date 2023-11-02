@@ -120,33 +120,57 @@
 								const fileInput = videoFileBtn.files[0];
 
 								const format = document.getElementById('output-format-select').value;
-								console.log(format);
 								let resolution = 1080;
 								const checkBoxes = document.getElementsByClassName('checkBox');
 								for (let i = 0; i < checkBoxes.length; i++) {
 									if (checkBoxes[i].checked) resolution = checkBoxes[i].value;
 								}
-								console.log(resolution);
-								const { createFFmpeg, fetchFile } = FFmpeg;
-								const ffmpeg = createFFmpeg({ log: true });
-								await ffmpeg.load();
-								console.log('ffmpeg load successful');
-								ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(fileInput));
-								await ffmpeg.run('-i', 'input.mp4', '-vf', `scale=-1:${resolution}`, `output.${format}`);
-								const output = ffmpeg.FS('readFile', `output.${format}`);
-								const outputBlob = new Blob([output], { type: `video/${format}` });
-								const outputFile = new File([outputBlob], 'output.mp4', { type: `video/${format}`})
 								const data = new FormData();
-								data.append('file', outputFile, `output.${format}`);
+								data.append('file', fileInput, fileInput.name);
 								const res = await axios.post(
-									`${window.location.href}transcode`, 
+									`${window.location.href}transcode`,
 									data,
 									{
 										headers: {
 											'Content-Type': 'multipart/form-data'
+										},
+										body: {
+											format: format,
+											resolution: resolution
 										}
 									}
 								);
+								console.log(res);
+
+
+								// const format = document.getElementById('output-format-select').value;
+								// console.log(format);
+								// let resolution = 1080;
+								// const checkBoxes = document.getElementsByClassName('checkBox');
+								// for (let i = 0; i < checkBoxes.length; i++) {
+								// 	if (checkBoxes[i].checked) resolution = checkBoxes[i].value;
+								// }
+								// console.log(resolution);
+								// const { createFFmpeg, fetchFile } = FFmpeg;
+								// const ffmpeg = createFFmpeg({ log: true });
+								// await ffmpeg.load();
+								// console.log('ffmpeg load successful');
+								// ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(fileInput));
+								// await ffmpeg.run('-i', 'input.mp4', '-vf', `scale=-1:${resolution}`, `output.${format}`);
+								// const output = ffmpeg.FS('readFile', `output.${format}`);
+								// const outputBlob = new Blob([output], { type: `video/${format}` });
+								// const outputFile = new File([outputBlob], 'output.mp4', { type: `video/${format}`})
+								// const data = new FormData();
+								// data.append('file', outputFile, `output.${format}`);
+								// const res = await axios.post(
+								// 	`${window.location.href}transcode`, 
+								// 	data,
+								// 	{
+								// 		headers: {
+								// 			'Content-Type': 'multipart/form-data'
+								// 		}
+								// 	}
+								// );
 							}
 						</script>
 

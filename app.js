@@ -25,7 +25,7 @@ app.get('/', (req, res) => {
 
 // app.use('/redis', redisRouter);
 app.use('/s3', s3Router);
-app.use('/transCode', transCodeRouter);
+app.use('/transcode', transCodeRouter);
 
 app.listen(PORT, HOST, () =>
 	console.log(`Listening on port ${HOST}:${PORT}......`)
