@@ -82,7 +82,7 @@ const transVideo = (req, res, next) => {
     let outPutFileName = fileName;
     if (originalFormat === newFormat) outPutFileName += Date.now();
 
-    ffmpeg(`./tmp/${fileName}.${originalFormat}`).size(`${resolution}x?`).aspect('1.333')
+    ffmpeg(`./tmp/${fileName}.${originalFormat}`).size(`${resolution}x?`)
         .output(`./tmp/${outPutFileName}.${newFormat}`)
         .on('progress', function (progress) {
             console.log('Processing: ', progress.timemark);
