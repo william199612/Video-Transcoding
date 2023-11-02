@@ -2,7 +2,10 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const FfmpegCommand = require('fluent-ffmpeg');
+
+const ffmpegStatic = require('ffmpeg-static');
+const ffmpeg = require('fluent-ffmpeg');
+ffmpeg.setFfmpegPath(ffmpegStatic);
 
 // const uploadFile = (req, res, next) => {
 //     const storage = multer.diskStorage({
@@ -43,6 +46,8 @@ const FfmpegCommand = require('fluent-ffmpeg');
 // });
 
 const saveVideoToLocal = (req, res, next) => {
+    console.log('====>', req.body);
+    // const { newFormat, originalFormat, resolution } = req.body;
     const storage = multer.diskStorage({
         destination: (req, file, cb) => {
             cb(null, 'tmp/');
@@ -64,13 +69,29 @@ const saveVideoToLocal = (req, res, next) => {
         } else {
             console.log(`Upload Successful!!`);
             req.body.success = true;
+            // req.body.newFormat = newFormat;
+            // req.body.originalFormat = originalFormat;
+            // req.body.resolution = resolution;
             transVideo(req, res, next);
         }
     });
 };
 
 const transVideo = (req, res, next) => {
-    req.body.success = true;
+    const { newFormat, originalFormat, resolution } = req.body;
+    console.log('--->', req.body);
+    ffmpeg(`./tmp/input.${originalFormat}`)
+        .output(`output.${newFormat}`)
+        .on('progress', function (progress) {
+            console.log('Processing: ', progress.timemark);
+        })
+        .on('error', function (err, stdout, stderr) {
+            console.log('Cannot process video: ' + err.message);
+        })
+        .on('end', function (stdout, stderr) {
+            console.log('Transcoding Succedded!!!');
+        })
+        .run();
     next();
 };
 

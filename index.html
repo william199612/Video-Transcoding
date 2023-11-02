@@ -127,16 +127,15 @@
 								}
 								const data = new FormData();
 								data.append('file', fileInput, fileInput.name);
+								data.append('newFormat', format);
+								data.append('originalFormat', fileInput.name.split('.')[1]);
+								data.append('resolution', resolution);
 								const res = await axios.post(
 									`${window.location.href}transcode`,
 									data,
 									{
 										headers: {
 											'Content-Type': 'multipart/form-data'
-										},
-										body: {
-											format: format,
-											resolution: resolution
 										}
 									}
 								);
