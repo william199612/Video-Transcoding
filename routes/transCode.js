@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 
 const ffmpegStatic = require('ffmpeg-static');
 const ffmpeg = require('fluent-ffmpeg');
@@ -46,18 +47,20 @@ ffmpeg.setFfmpegPath(ffmpegStatic);
 // });
 
 const saveVideoToLocal = (req, res, next) => {
-    console.log('====>', req.body);
-    // const { newFormat, originalFormat, resolution } = req.body;
     const storage = multer.diskStorage({
         destination: (req, file, cb) => {
             cb(null, 'tmp/');
         },
         filename: (req, file, cb) => {
-            const extname = path.extname(file.originalname);
-            const filename = 'input' + extname;
+            console.log('file:', file);
+            // const extname = path.extname(file.originalname);
+            const filename = file.originalname;
             cb(null, filename);
         }
     });
+    if (!fs.existsSync('./tmp')) {
+        fs.mkdirSync('./tmp');
+    }
     const upload = multer({ storage }).single('file');
     upload(req, res, (err) => {
         if (err) {
@@ -67,43 +70,48 @@ const saveVideoToLocal = (req, res, next) => {
             console.log(err);
             next();
         } else {
-            console.log(`Upload Successful!!`);
-            req.body.success = true;
-            // req.body.newFormat = newFormat;
-            // req.body.originalFormat = originalFormat;
-            // req.body.resolution = resolution;
+            console.log(`Save file Successful!!`);
             transVideo(req, res, next);
         }
     });
 };
 
 const transVideo = (req, res, next) => {
-    const { newFormat, originalFormat, resolution } = req.body;
-    console.log('--->', req.body);
-    ffmpeg(`./tmp/input.${originalFormat}`)
-        .output(`output.${newFormat}`)
+    const { newFormat, originalFormat, resolution, fileName } = req.body;
+    console.log('transVideo --->', newFormat);
+    let outPutFileName = fileName;
+    if (originalFormat === newFormat) outPutFileName += Date.now();
+
+    ffmpeg(`./tmp/${fileName}.${originalFormat}`).size(`${resolution}x?`).aspect('1.333')
+        .output(`./tmp/${outPutFileName}.${newFormat}`)
         .on('progress', function (progress) {
             console.log('Processing: ', progress.timemark);
         })
         .on('error', function (err, stdout, stderr) {
             console.log('Cannot process video: ' + err.message);
+            req.body.success = false;
+            req.body.errMsg = err.message;
+            next();
         })
         .on('end', function (stdout, stderr) {
             console.log('Transcoding Succedded!!!');
+            req.body.fileName = outPutFileName + '.' + newFormat;
+            req.body.success = true;
+            next();
         })
         .run();
-    next();
 };
-
 
 router.post('', saveVideoToLocal, (req, res) => {
     if (req.body.success) {
         return res.status(200).json({
-            success: true
+            success: true,
+            fileName: req.body.fileName
         });
     } else {
         return res.status(500).json({
-            success: false
+            success: false,
+            errMsg: req.body.errMsg
          });
     }
 });

@@ -56,7 +56,6 @@
 							<option value="mpeg">MPEG</option>
 							<option value="mov">MOV</option>
 							<option value="flv">FLV</option>
-							<option value="3pg">3PG</option>
 							<option value="webm">WEBM</option>
 							<option value="mkv">MKV</option>
 							<option value="wmv">WMV</option>
@@ -130,7 +129,8 @@
 								data.append('newFormat', format);
 								data.append('originalFormat', fileInput.name.split('.')[1]);
 								data.append('resolution', resolution);
-								const res = await axios.post(
+								data.append('fileName', fileInput.name.split('.')[0])
+								const resFromTrans = await axios.post(
 									`${window.location.href}transcode`,
 									data,
 									{
@@ -139,7 +139,21 @@
 										}
 									}
 								);
-								console.log(res);
+								const msgDiv = document.getElementById('msgDiv');
+								if (resFromTrans.data.success) {
+									console.log('Enter Upload Process!!');
+									const resFromS3 = await axios.post(
+										`${window.location.href}s3`,
+										{
+											fileName: resFromTrans.data.fileName
+										}
+									);
+									console.log(resFromS3);
+									msgDiv.innerHTML = `<br><a href=${resFromS3.data.url}>Download Video</a>`;
+								} else {
+									console.log('Something Err!!!', resFromS3.data.errMsg);
+									msgDiv.innerText = `Error!!!\n${resFromS3.data.errMsg}`;
+								}
 
 
 								// const format = document.getElementById('output-format-select').value;
@@ -173,10 +187,10 @@
 							}
 						</script>
 
+						<div id="msgDiv"></div>
 					</div>
 				</div>
 			</div>
-			<div class="inputImage"></div>
 		</div>
 	</body>
 </html>
