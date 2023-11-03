@@ -30,15 +30,27 @@ async function uploadJsonToS3 (s3, bucketName, objectKey) {
 	  Key: objectKey,
 	  Body: fs.createReadStream(`./tmp/${objectKey}`)
 	};
-  
 	try {
 	  await s3.putObject(params).promise();
-	  try {
-		fs.unlinkSync(`./tmp/${objectKey}`);
-		console.log('Delete File Successful');
-	  } catch (err) {
-		console.log('Delete File Err: ', err);
-	  }
+	  fs.readdir('./tmp', function (err, files) {
+		// if (err) {
+		// 	return console.log('Unable to scan directory: ' + err);
+		// } 
+		//listing all files using forEach
+		files.forEach(function (file) {
+			// Do whatever you want to do with the file
+			console.log(file);
+			fs.unlinkSync(`./tmp/${file}`);
+		});
+	});
+	  
+	// try {
+	// 	fs.unlinkSync(`./tmp/${objectKey}`);
+	// 	console.log('Delete File Successful');
+	//   } catch (err) {
+	// 	console.log('Delete File Err: ', err);
+	//   }
+
 	  console.log('File uploaded successfully.');
 	  return { successUpload: true };
 	} catch (err) {

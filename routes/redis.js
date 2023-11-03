@@ -1,5 +1,5 @@
 const AWS = require('aws-sdk');
-const Redis = require('redis');
+const redis = require('redis');
 const express = require('express');
 const router = express.Router();
 const fs = require('fs');
@@ -15,10 +15,12 @@ const bucketName = process.env.BUCKET_NAME;
 const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
 
 // Initialize Redis client
-const redis = new Redis({
-	host: 'localhost',
-	port: 6379,
-});
+// const redis = new Redis({
+// 	host: 'localhost',
+// 	port: 6379
+// });
+
+const client = redis.createClient();
 
 s3.createBucket({ Bucket: bucketName })
 	.promise()
@@ -30,100 +32,54 @@ s3.createBucket({ Bucket: bucketName })
 		}
 	});
 
-// TODO: rewrite this section to save the result in cache and S3
-router.post('', async (req, res, next) => {
-	// TODO: change key name
-	const key = req.query.key.trim();
-	const cacheKey = `video:${key}`; // Redis cache key
-	const s3Key = `video-${key}`; // S3 key
+router.post('/saveCache', async (req, res, next) => {
+	const { fileUrl } = req.body;
+	client.on('error', err => console.log(`Redis Client Error!! ${err}`));
 
-	// Check Redis Cache
-	redis.get(cacheKey, (redisErr, redisResult) => {
-		if (redisErr) {
-			console.error(`Redis Error: ${redisErr}`);
-		}
+	// Check whether is connected
+	if (!client.isReady) await client.connect();
 
-		if (redisResult) {
-			// Serve from Redis Cache
-			const resultJSON = JSON.parse(redisResult);
-			res.json({ source: 'Redis Cache', ...resultJSON });
-			console.log('Serve the result from Cache');
-		} else {
-			// Check S3
-			const s3Params = { Bucket: bucketName, Key: s3Key };
+	const result = await client.set('fileUrl', fileUrl, 60);
+	await client.quit();
+	if (result === 'OK') {
+		return res.status(200).json({
+			success: true
+		});
+	} else {
+		return res.status(500).json({
+			success: false,
+			errMsg: 'Occur Error When saving data to Redis!!!'
+		});
+	}
+});
 
-			s3.getObject(s3Params)
-				.promise()
-				.then((s3Result) => {
-					// Serve from S3
-					const s3ResultJSON = JSON.parse(s3Result.Body);
-					res.json({
-						source: 'S3 Bucket',
-						...s3ResultJSON,
-					});
-					console.log('Serve the result from S3');
-
-					// Store in Redis Cache
-					redis.set(
-						cacheKey,
-						JSON.stringify({
-							source: 'Redis Cache',
-							...s3ResultJSON,
-						})
-					);
-					console.log('Saving the result to Cache');
-				})
-				.catch((s3Err) => {
-					// TODO: remove this section
-					if (s3Err.statusCode === 404) {
-						// Serve from Wikipedia API and store in S3 and Redis Cache
-						const searchUrl = `https://en.wikipedia.org/w/api.php?action=parse&format=json&section=0&page=${key}`;
-						axios
-							.get(searchUrl)
-							.then((response) => {
-								const responseJSON = response.data;
-								const body = JSON.stringify({
-									source: 'S3 Bucket',
-									...responseJSON,
-								});
-
-								const objectParams = {
-									Bucket: bucketName,
-									Key: s3Key,
-									Body: body,
-								};
-								s3.putObject(objectParams)
-									.promise()
-									.then(() => {
-										console.log(
-											`Successfully uploaded data to ${bucketName}/${s3Key}`
-										);
-
-										// Serve from Wikipedia API response and store in Redis Cache
-										res.json({
-											source: 'Wikipedia API',
-											...responseJSON,
-										});
-										redis.set(
-											cacheKey,
-											JSON.stringify({
-												source: 'Redis Cache',
-												...responseJSON,
-											})
-										);
-										console.log(
-											'Serve from Wikipedia API and store in S3 and Redis Cache'
-										);
-									});
-							})
-							.catch((apiErr) => res.json(apiErr));
-					} else {
-						// Something else went wrong when accessing S3
-						res.json(s3Err);
-					}
-				});
-		}
+router.post('/getCache', async (req, res, next) => {
+	client.on('error', (err) => {
+		console.log(`Redis Client Error!! ${err}`);
+		return res.status(500).json({
+			success: false,
+			errMsg: err
+		});
 	});
+
+	// Check whether is connected
+	if (!client.isReady) await client.connect();
+	const redisResult = await client.get('fileUrl');
+	await client.quit();
+	
+	if (redisResult) {
+		return res.status(200).json({
+			success: true,
+			haveCache: true,
+			url: redisResult
+		});
+	} else {
+		return res.status(200).json({
+			success: true,
+			haveCache: false
+		});
+	}
+
 });
 
 module.exports = router;

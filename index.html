@@ -150,6 +150,12 @@
 									);
 									console.log(resFromS3);
 									msgDiv.innerHTML = `<br><a href=${resFromS3.data.url}>Download Video</a>`;
+									const resFromRedis = await axios.post(
+										`${window.location.href}redis/saveCache`,
+										{
+											fileUrl: resFromS3.data.url
+										}
+									);
 								} else {
 									console.log('Something Err!!!', resFromS3.data.errMsg);
 									msgDiv.innerText = `Error!!!\n${resFromS3.data.errMsg}`;
