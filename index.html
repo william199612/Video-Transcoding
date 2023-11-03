@@ -10,193 +10,211 @@
 		<link rel="stylesheet" href="./style.css" />
 		<script type="module" src="index.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.27.2/axios.min.js"></script>
-		<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.0/dist/ffmpeg.min.js"  crossorigin="anonymous"></script>
 	</head>
 	<body>
-		<script>
-			if (!crossOriginIsolated) SharedArrayBuffer = ArrayBuffer;
-		</script>
-		<div class="content">
-			<h1>Welcome!</h1>
-			<br />
-			<p class="highlight">
-				With just one click, video transcoding will be
-				finish in a blink. Give it a try!
-			</p>
-			<br />
-			<br />
-			<div class="getStarted">
-				<div id="form" style="display: block">
-					<h2>Create a new job</h2>
-					<h3>Source Video</h3>
-					<input
-						type="file"
-						id="video-file"
-						name="video-file"
-						placeholder="Upload a file"
-						accept="video/*"
-					/>
-
-					<video width="320" height="240" style="display:none" controls autoplay>
-						Your browser does not support the video tag.
-					  </video>
-					<h3>Output Settings</h3>
-					<p>
-						<label
-							for="output-format-select"
-							class="settingTitle"
-							>Format</label
-						>
-						<select
-							name="output-format"
-							id="output-format-select"
-						>
-							<option value="mp4">MP4</option>
-							<option value="avi">AVI</option>
-							<option value="mpeg">MPEG</option>
-							<option value="mov">MOV</option>
-							<option value="flv">FLV</option>
-							<option value="webm">WEBM</option>
-							<option value="mkv">MKV</option>
-							<option value="wmv">WMV</option>
-						</select>
-					</p>
-					<div class="formResolution">
-						<label
-							for="resolution"
-							class="settingTitle"
-							id="resolution-title"
-							>Resolutions</label
-						>
-						<form id="resolutionInput" class="resolutionInput">
-							<input
-								class="checkBox"
-								type="checkbox"
-								value="360"
-								name="360p"
-								style="margin-right: 5px"
-							/>
-							360p
-							<input
-								class="checkBox"
-								type="checkbox"
-								value="480"
-								name="480p"
-								style="margin-left: 20px; margin-right: 5px"
-							/>
-							480p
-							<input
-								class="checkBox"
-								type="checkbox"
-								value="720"
-								name="720p"
-								style="margin-left: 20px; margin-right: 5px"
-							/>
-							720p
-							<input
-								class="checkBox"
-								type="checkbox"
-								value="1080"
-								name="1080p"
-								style="margin-left: 20px; margin-right: 5px"
-								checked
-							/>
-							1080p
-						</form>
-					</div>
-					<div>
-						<br />
-						<input id="transcodeBtn" type="button" value="Convert" />
-
-						<!-- JS -->
-						<script>
-							const transcodeBtn = document.getElementById('transcodeBtn');
-							transcodeBtn.removeEventListener('click', videoTranscode);
-							transcodeBtn.addEventListener('click', videoTranscode);
-
-							async function videoTranscode () {
-								const videoFileBtn = document.getElementById('video-file');
-								const fileInput = videoFileBtn.files[0];
-
-								const format = document.getElementById('output-format-select').value;
-								let resolution = 1080;
-								const checkBoxes = document.getElementsByClassName('checkBox');
-								for (let i = 0; i < checkBoxes.length; i++) {
-									if (checkBoxes[i].checked) resolution = checkBoxes[i].value;
-								}
-								const data = new FormData();
-								data.append('file', fileInput, fileInput.name);
-								data.append('newFormat', format);
-								data.append('originalFormat', fileInput.name.split('.')[1]);
-								data.append('resolution', resolution);
-								data.append('fileName', fileInput.name.split('.')[0])
-								const resFromTrans = await axios.post(
-									`${window.location.href}transcode`,
-									data,
-									{
-										headers: {
-											'Content-Type': 'multipart/form-data'
-										}
-									}
-								);
-								const msgDiv = document.getElementById('msgDiv');
-								if (resFromTrans.data.success) {
-									console.log('Enter Upload Process!!');
-									const resFromS3 = await axios.post(
-										`${window.location.href}s3`,
-										{
-											fileName: resFromTrans.data.fileName
-										}
-									);
-									console.log(resFromS3);
-									msgDiv.innerHTML = `<br><a href=${resFromS3.data.url}>Download Video</a>`;
-									const resFromRedis = await axios.post(
-										`${window.location.href}redis/saveCache`,
-										{
-											fileUrl: resFromS3.data.url
-										}
-									);
-								} else {
-									console.log('Something Err!!!', resFromS3.data.errMsg);
-									msgDiv.innerText = `Error!!!\n${resFromS3.data.errMsg}`;
-								}
-
-
-								// const format = document.getElementById('output-format-select').value;
-								// console.log(format);
-								// let resolution = 1080;
-								// const checkBoxes = document.getElementsByClassName('checkBox');
-								// for (let i = 0; i < checkBoxes.length; i++) {
-								// 	if (checkBoxes[i].checked) resolution = checkBoxes[i].value;
-								// }
-								// console.log(resolution);
-								// const { createFFmpeg, fetchFile } = FFmpeg;
-								// const ffmpeg = createFFmpeg({ log: true });
-								// await ffmpeg.load();
-								// console.log('ffmpeg load successful');
-								// ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(fileInput));
-								// await ffmpeg.run('-i', 'input.mp4', '-vf', `scale=-1:${resolution}`, `output.${format}`);
-								// const output = ffmpeg.FS('readFile', `output.${format}`);
-								// const outputBlob = new Blob([output], { type: `video/${format}` });
-								// const outputFile = new File([outputBlob], 'output.mp4', { type: `video/${format}`})
-								// const data = new FormData();
-								// data.append('file', outputFile, `output.${format}`);
-								// const res = await axios.post(
-								// 	`${window.location.href}transcode`, 
-								// 	data,
-								// 	{
-								// 		headers: {
-								// 			'Content-Type': 'multipart/form-data'
-								// 		}
-								// 	}
-								// );
-							}
-						</script>
-
-						<div id="msgDiv"></div>
-					</div>
-				</div>
+		<div class="title" id="title">Video Transcoder</div>
+		<div class="content" id="content">
+			<div class="drop-area" id="drop-area">
+				<label class="custom-file-uploader">
+					<input class="input-file" id="input-file" type="file" accept="video/*"/>
+					<img src="./src/add.svg" width="50px" height="50px" style="padding-bottom: 5px;">
+					Add Video
+				</label>
 			</div>
+			<video class="hidden" src="" controls>
 		</div>
+		<div class="reset-btn" id="reset-btn">Reset</div>
+		
+		<div class="transcode-setting">
+			<h3>Output Settings</h3>
+			<div class="resolution">
+				<label
+					for="resolution"
+					class="settingTitle"
+					id="resolution-title"
+					>Resolutions</label
+				>
+				<form id="resolutionInput" class="resolutionInput">
+					<input
+						class="checkbox-resolution"
+						type="checkbox"
+						value="1080"
+						name="1080p"
+						style="margin-right: 5px"
+						checked
+					/>
+					1080p
+					<input
+						class="checkbox-resolution"
+						type="checkbox"
+						value="720"
+						name="720p"
+						style="margin-left: 20px; margin-right: 5px"
+					/>
+					720p
+					<input
+						class="checkbox-resolution"
+						type="checkbox"
+						value="480"
+						name="480p"
+						style="margin-left: 20px; margin-right: 5px"
+					/>
+					480p
+					<input
+						class="checkbox-resolution"
+						type="checkbox"
+						value="360"
+						name="360p"
+						style="margin-left: 20px; margin-right: 5px"
+					/>
+					360p
+				</form>
+			</div>
+
+			<div class="format">
+				<label
+					for="format"
+					class="settingTitle"
+					id="format-title"
+					>Format</label
+				>
+				<form id="formatInput" class="formatInput">
+					<input
+						class="checkbox-format"
+						type="checkbox"
+						value="mp4"
+						name="mp4"
+						style="margin-right: 5px"
+						checked
+					/>
+					MP4
+					<input
+						class="checkbox-format"
+						type="checkbox"
+						value="avi"
+						name="avi"
+						style="margin-left: 15px; margin-right: 5px"
+					/>
+					AVI
+					<input
+						class="checkbox-format"
+						type="checkbox"
+						value="mpeg"
+						name="mpeg"
+						style="margin-left: 15px; margin-right: 5px"
+					/>
+					MPEG
+					<input
+						class="checkbox-format"
+						type="checkbox"
+						value="mov"
+						name="mov"
+						style="margin-left: 15px; margin-right: 5px"
+					/>
+					MOV
+					<input
+						class="checkbox-format"
+						type="checkbox"
+						value="flv"
+						name="flv"
+						style="margin-left: 15px; margin-right: 5px"
+					/>
+					FLV
+					<input
+						class="checkbox-format"
+						type="checkbox"
+						value="webm"
+						name="webm"
+						style="margin-left: 15px; margin-right: 5px"
+					/>
+					WEBM
+					<input
+						class="checkbox-format"
+						type="checkbox"
+						value="mkv"
+						name="mkv"
+						style="margin-left: 15px; margin-right: 5px"
+					/>
+					MKV
+					<input
+						class="checkbox-format"
+						type="checkbox"
+						value="wmv"
+						name="wmv"
+						style="margin-left: 15px; margin-right: 5px"
+					/>
+					WMV		
+				</form>
+			</div>
+			<div class="transcode-btn" id="transcode-btn">Transcode</div>
+			<div id="msg-div"></div>
+		</div>
+
+		<script>
+			const transcodeBtn = document.getElementById('transcode-btn');
+			transcodeBtn.removeEventListener('click', videoTranscode);
+			transcodeBtn.addEventListener('click', videoTranscode);
+
+			async function videoTranscode () {
+				const videoFileBtn = document.getElementById('input-file');
+				if (videoFileBtn.files.length === 0) return;
+				const fileInput = videoFileBtn.files[0];
+
+				let resolution = 1080;
+				let format = 'mp4';
+				const resolutionCheckBoxes = document.getElementsByClassName('checkbox-resolution');
+				for (let i = 0; i < resolutionCheckBoxes.length; i++) {
+					if (resolutionCheckBoxes[i].checked) resolution = resolutionCheckBoxes[i].value;
+				}
+				const formatCheckBoxes = document.getElementsByClassName('checkbox-format');
+				for (let i = 0; i < formatCheckBoxes.length; i++) {
+					if (formatCheckBoxes[i].checked) format = formatCheckBoxes[i].value;
+				}
+				const data = new FormData();
+				data.append('file', fileInput, fileInput.name);
+				data.append('newFormat', format);
+				data.append('originalFormat', fileInput.name.split('.')[1]);
+				data.append('resolution', resolution);
+				data.append('fileName', fileInput.name.split('.')[0])
+				const resFromTrans = await axios.post(
+					`${window.location.href}transcode`,
+					data,
+					{
+						headers: {
+							'Content-Type': 'multipart/form-data'
+						}
+					}
+				);
+				const msgDiv = document.getElementById('msg-div');
+				if (resFromTrans.data.success) {
+					msgDiv.innerText = 'Transcode successful!!';
+					if (!msgDiv.classList.contains('success-msg')) msgDiv.classList.toggle('success-msg');
+					const resFromS3 = await axios.post(
+						`${window.location.href}s3`,
+						{
+							fileName: resFromTrans.data.fileName
+						}
+					);
+
+					if (resFromS3.data.success) {
+						msgDiv.innerHTML = `<br><a href=${resFromS3.data.url}>Download Video</a>`;
+						const resFromRedis = await axios.post(
+							`${window.location.href}redis/saveCache`,
+							{
+								fileUrl: resFromS3.data.url
+							}
+						);
+						if (!msgDiv.classList.contains('success-msg')) msgDiv.classList.toggle('success-msg');
+						msgDiv.innerText = 'Upload to S3 successful!!';
+					} else {
+						msgDiv.innerText = `Error!!!\n${resFromS3.data.errMsg}`;
+					}
+					
+				} else {
+					console.log('Something Err!!!', resFromS3.data.errMsg);
+					msgDiv.innerText = `Error!!!\n${resFromS3.data.errMsg}`;
+				}
+			}
+		</script>
 	</body>
 </html>

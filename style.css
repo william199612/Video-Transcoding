@@ -1,33 +1,12 @@
 * {
-	font-family: 'ProximaNova-Light', 'Helvetica Neue',
-		Helvetica, Arial, sans-serif;
+	font-family: 'ProximaNova-Light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	background-color: blanchedalmond;
 }
 
-.content {
-	padding-top: 40px;
-	width: 80%;
-	margin-left: auto;
-	margin-right: auto;
-}
-
-h3 {
-	margin-top: 40px;
-	margin-bottom: 20px;
-}
-
-.highlight {
-	border-radius: 15px;
-	background-color: #e0e0e0;
-	padding: 20px;
-}
-
-#video-file {
-	border: 0;
-}
-
-.formResolution {
-	display: inline-block;
-	width: 200px;
+.transcode-setting {
+	width: 85vw;
+	min-width: 620px;
+	margin: 20px auto;
 }
 
 .settingTitle {
@@ -50,4 +29,96 @@ select {
 	font-size: 16px !important;
 	border-right: 10px solid transparent;
 	outline: 1px solid black;
+}
+
+.title {
+	font-size: 25px;
+	font-weight: bold;
+	padding-bottom: 20px;
+	min-width: 350px;
+}
+
+.content {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 85vw;
+	min-width: 620px;
+	height: 360px !important;
+	margin: 0px auto;
+	padding-top: 40px;
+}
+
+.drop-area {
+	border: 2px solid gray;
+	border-radius: 18px;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.video-preview {
+	display: none;
+}
+
+input[type='file'] {
+	display: none;
+}
+
+.custom-file-uploader {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+}
+
+video {
+	width: 100%;
+	height: 100%;
+}
+
+.hidden {
+	display: none;
+}
+
+.reset-btn {
+	margin: 20px auto;
+	width: 85vw;
+	min-width: 600px;
+	max-width: 650px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.resolutionInput, .formatInput {
+	margin-top: 0px;
+}
+
+.resolution, .format {
+	margin: 20px auto;
+}
+
+.transcode-btn {
+	cursor: pointer;
+	border: 2px solid lightskyblue;
+	border-radius: 10px;
+	width: min-content;
+	padding: 5px;
+}
+
+#msg-div {
+	margin-top: 30px;
+	font-size: 25px;
+	font-weight: bold;
+	color: red;
+}
+
+.success-msg {
+	color: green !important;
 }
