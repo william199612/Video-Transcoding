@@ -39,7 +39,7 @@ router.post('/saveCache', async (req, res, next) => {
 	// Check whether is connected
 	if (!client.isReady) await client.connect();
 
-	const result = await client.set('fileUrl', fileUrl, 60);
+	const result = await client.set('fileUrl', fileUrl, { EX: 60 });
 	await client.quit();
 	if (result === 'OK') {
 		return res.status(200).json({
@@ -66,17 +66,17 @@ router.post('/getCache', async (req, res, next) => {
 	if (!client.isReady) await client.connect();
 	const redisResult = await client.get('fileUrl');
 	await client.quit();
-	
+
 	if (redisResult) {
 		return res.status(200).json({
 			success: true,
-			haveCache: true,
+			hasCache: true,
 			url: redisResult
 		});
 	} else {
 		return res.status(200).json({
 			success: true,
-			haveCache: false
+			hasCache: false
 		});
 	}
 
