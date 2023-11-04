@@ -9,15 +9,17 @@ async function createS3bucket (s3, bucketName) {
 	console.log('Creating Bucket...');
 	try {
 		await s3
-			.createS3bucket({ Bucket: bucketName })
+			.createBucket({ Bucket: bucketName })
 			.promise();
 		console.log(`Created bucket: ${bucketName}`);
-		return s3;
+		return { successCreateBucket: true };
 	} catch (e) {
 		if (e.statusCode === 409) {
 			console.log(`${bucketName} already exist!`);
+			return { successCreateBucket: true };
 		} else {
 			console.log(`Error during creating bucket: ${e}`);
+			return { successCreateBucket: false, err: `Error during creating bucket:\n ${e.code}: ${e.message}` };
 		}
 	}
 }
@@ -69,19 +71,29 @@ router.post('', async function (req, res, next) {
     const bucketName = process.env.AWS_BUCKET_NAME;
     const objectKey = fileName;
       
-    await createS3bucket(s3, bucketName);
-    const { successUpload, errMsg = '' } = await uploadJsonToS3(s3, bucketName, objectKey);
-	if (successUpload) {
-		return res.status(200).json({
-			success: true,
-			url: `https://${bucketName}.s3.${process.env.AWS_BUCKET_REGION}.amazonaws.com/${objectKey}`
-		});
+    const { successCreateBucket, err = '' } = await createS3bucket(s3, bucketName);
+	if (successCreateBucket) {
+		console.log('76');
+		const { successUpload, errMsg = '' } = await uploadJsonToS3(s3, bucketName, objectKey);
+		if (successUpload) {
+			return res.status(200).json({
+				success: true,
+				url: `https://${bucketName}.s3.${process.env.AWS_BUCKET_REGION}.amazonaws.com/${objectKey}`
+			});
+		} else {
+			return res.status(200).json({
+				success: false,
+				errMsg: errMsg
+			});
+		}
 	} else {
-		return res.status(500).json({
+		console.log('90');
+		return res.status(200).json({
 			success: false,
-			errMsg: errMsg
+			errMsg: err
 		});
 	}
+   
 });
 
 module.exports = router;

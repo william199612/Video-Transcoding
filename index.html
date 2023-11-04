@@ -148,13 +148,17 @@
 			</div>
 			<div class="transcode-btn" id="transcode-btn">Transcode</div>
 			<div id="msg-div"></div>
+			<div id="download-div"></div>
 		</div>
 
 		<script>
 			const transcodeBtn = document.getElementById('transcode-btn');
 			transcodeBtn.removeEventListener('click', videoTranscode);
 			transcodeBtn.addEventListener('click', videoTranscode);
-
+			function getTime () {
+				const d = new Date();
+				return ("0" + d.getHours()).substr(-2) + ':' + ("0" + d.getMinutes()).substr(-2) + ':' + ("0" + d.getSeconds()).substr(-2);
+			}
 			async function videoTranscode () {
 				const videoFileBtn = document.getElementById('input-file');
 				if (videoFileBtn.files.length === 0) return;
@@ -187,32 +191,32 @@
 				);
 				const msgDiv = document.getElementById('msg-div');
 				if (resFromTrans.data.success) {
-					msgDiv.innerText = 'Transcode successful!!';
-					if (!msgDiv.classList.contains('success-msg')) msgDiv.classList.toggle('success-msg');
+					// if (!msgDiv.classList.contains('success-msg')) msgDiv.classList.toggle('success-msg');
+					msgDiv.innerHTML += `<p class="success-msg">${getTime()} - Transcode successful!!</p>`;
 					const resFromS3 = await axios.post(
 						`${window.location.href}s3`,
 						{
 							fileName: resFromTrans.data.fileName
 						}
 					);
-
 					if (resFromS3.data.success) {
-						msgDiv.innerHTML = `<br><a href=${resFromS3.data.url}>Download Video</a>`;
+						const downloadDiv = document.getElementById('download-div');
+						downloadDiv.innerHTML = `<br><a href=${resFromS3.data.url}>Download Video</a>`;
 						const resFromRedis = await axios.post(
 							`${window.location.href}redis/saveCache`,
 							{
 								fileUrl: resFromS3.data.url
 							}
 						);
-						if (!msgDiv.classList.contains('success-msg')) msgDiv.classList.toggle('success-msg');
-						msgDiv.innerText = 'Upload to S3 successful!!';
+						// if (!msgDiv.classList.contains('success-msg')) msgDiv.classList.toggle('success-msg');
+						msgDiv.innerHTML += `<p class="success-msg">${getTime()} - Upload to S3 successful!!</p><br>`;
 					} else {
-						msgDiv.innerText = `Error!!!\n${resFromS3.data.errMsg}`;
+						// if (msgDiv.classList.contains('success-msg')) msgDiv.classList.toggle('success-msg');
+						msgDiv.innerHTML += `<p>${getTime()} - ${resFromS3.data.errMsg}</p><br>`;
 					}
-					
 				} else {
-					console.log('Something Err!!!', resFromS3.data.errMsg);
-					msgDiv.innerText = `Error!!!\n${resFromS3.data.errMsg}`;
+					// if (msgDiv.classList.contains('success-msg')) msgDiv.classList.toggle('success-msg');
+					msgDiv.innerHTML += `<p>${getTime()} - ${resFromTrans.data.errMsg}</p><br>`;
 				}
 			}
 		</script>

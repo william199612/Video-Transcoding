@@ -9,6 +9,7 @@ const content = document.getElementById('content');
 const resetBtn = document.getElementById('reset-btn');
 const videoPreview = document.querySelector('video');
 const msgDiv = document.getElementById('msg-div');
+const downloadDiv = document.getElementById('download-div');
 
 // prevant checkbox select multiple at the same time
 for (let i = 0; i < resolutionCheckBoxes.length; i++) {
@@ -35,8 +36,7 @@ window.onload = async function () {
   console.log('Winodw onload!!!');
   const res = await axios.post(`${window.location.href}redis/getCache`);
   if (res.data.success && res.data.hasCache) {
-    const msgDiv = document.getElementById('msgDiv');
-    msgDiv.innerHTML = `<br><a href=${res.data.url}>Download Video</a>`;
+    downloadDiv.innerHTML = `<br><a href=${res.data.url}>Download Video</a>`;
   }
 };
 
@@ -68,7 +68,7 @@ function handleFileDrop (e) {
   const dt = e.dataTransfer;
   const files = dt.files;
   if (!files[0].type.includes('video')) {
-    msgDiv.innerText = 'This file is not supported!!';
+    msgDiv.innerHTML = '<p>This file is not supported!!</p>';
     return;
   } else {
     msgDiv.innerText = '';
@@ -94,7 +94,8 @@ resetBtn.removeEventListener('click', clickResetBtn);
 resetBtn.addEventListener('click', clickResetBtn);
 
 function clickResetBtn (e) {
-  msgDiv.innerText = '';
+  msgDiv.innerHTML = '';
+  downloadDiv.innerHTML = '';
   if (fileInput.files.length === 0) return;
   fileInput.value = '';
   dropZone.classList.toggle('hidden');
