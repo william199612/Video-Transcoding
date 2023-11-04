@@ -41,6 +41,7 @@ window.onload = async function () {
   console.log('Winodw onload!!!');
   const res = await axios.post(`${window.location.href}redis/getCache`);
   if (res.data.success && res.data.hasCache) {
+    msgDiv.innerHTML += `<p class="success-msg">${getTime()} -- Successfully get Cache from Redis!</p>`;
     downloadDiv.innerHTML = `<br><a href=${res.data.url}>Download Video</a>`;
   }
   if (!res.data.success && res.data.hasCache) {

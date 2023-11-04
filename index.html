@@ -153,6 +153,7 @@
 
 		<script>
 			const transcodeBtn = document.getElementById('transcode-btn');
+			const msgDiv = document.getElementById('msg-div');
 			transcodeBtn.removeEventListener('click', videoTranscode);
 			transcodeBtn.addEventListener('click', videoTranscode);
 			function getTime () {
@@ -180,6 +181,7 @@
 				data.append('originalFormat', fileInput.name.split('.')[1]);
 				data.append('resolution', resolution);
 				data.append('fileName', fileInput.name.split('.')[0])
+				msgDiv.innerHTML += `<p class="success-msg">${getTime()} - Start Transcoding!</p>`;
 				const resFromTrans = await axios.post(
 					`${window.location.href}transcode`,
 					data,
@@ -189,10 +191,11 @@
 						}
 					}
 				);
-				const msgDiv = document.getElementById('msg-div');
+				
 				if (resFromTrans.data.success) {
 					// if (!msgDiv.classList.contains('success-msg')) msgDiv.classList.toggle('success-msg');
 					msgDiv.innerHTML += `<p class="success-msg">${getTime()} - Transcode successful!!</p>`;
+					msgDiv.innerHTML += `<p class="success-msg">${getTime()} - Start Uploading to S3</p>`;
 					const resFromS3 = await axios.post(
 						`${window.location.href}s3`,
 						{
