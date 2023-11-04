@@ -32,11 +32,19 @@ for (let i = 0; i < formatCheckBoxes.length; i++) {
   });
 }
 
+function getTime () {
+  const d = new Date();
+  return ('0' + d.getHours()).substr(-2) + ':' + ('0' + d.getMinutes()).substr(-2) + ':' + ('0' + d.getSeconds()).substr(-2);
+}
+
 window.onload = async function () {
   console.log('Winodw onload!!!');
   const res = await axios.post(`${window.location.href}redis/getCache`);
   if (res.data.success && res.data.hasCache) {
     downloadDiv.innerHTML = `<br><a href=${res.data.url}>Download Video</a>`;
+  }
+  if (!res.data.success && res.data.hasCache) {
+    msgDiv.innerHTML += `<p>${getTime()} -- ${res.data.errMsg}</p>`;
   }
 };
 
@@ -68,10 +76,11 @@ function handleFileDrop (e) {
   const dt = e.dataTransfer;
   const files = dt.files;
   if (!files[0].type.includes('video')) {
-    msgDiv.innerHTML = '<p>This file is not supported!!</p>';
+    clickResetBtn();
+    msgDiv.innerHTML = `<p>${getTime()} -- This file is not supported!!</p>`;
     return;
   } else {
-    msgDiv.innerText = '';
+    msgDiv.innerHTML = '';
   }
   console.log(files[0].type);
   fileInput.files = files;
@@ -87,13 +96,15 @@ function handleVideoPreview () {
   const blobURL = window.URL.createObjectURL(fileInput.files[0]);
   videoPreview.src = blobURL;
   console.log(videoPreview);
+  msgDiv.innerHTML += `<p class="success-msg">${getTime()} -- Render Complete!!</p>`;
+  // msgDiv.innerHTML += `<p class="success-msg">${fileInput.files[0].name}</p>`;
 }
 
 // handle event of reset button
 resetBtn.removeEventListener('click', clickResetBtn);
 resetBtn.addEventListener('click', clickResetBtn);
 
-function clickResetBtn (e) {
+function clickResetBtn () {
   msgDiv.innerHTML = '';
   downloadDiv.innerHTML = '';
   if (fileInput.files.length === 0) return;
