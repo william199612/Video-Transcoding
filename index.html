@@ -193,7 +193,6 @@
 				);
 				
 				if (resFromTrans.data.success) {
-					// if (!msgDiv.classList.contains('success-msg')) msgDiv.classList.toggle('success-msg');
 					msgDiv.innerHTML += `<p class="success-msg">${getTime()} - Transcode successful!!</p>`;
 					msgDiv.innerHTML += `<p class="success-msg">${getTime()} - Start Uploading to S3</p>`;
 					const resFromS3 = await axios.post(
@@ -211,14 +210,11 @@
 								fileUrl: resFromS3.data.url
 							}
 						);
-						// if (!msgDiv.classList.contains('success-msg')) msgDiv.classList.toggle('success-msg');
 						msgDiv.innerHTML += `<p class="success-msg">${getTime()} - Upload to S3 successful!!</p><br>`;
 					} else {
-						// if (msgDiv.classList.contains('success-msg')) msgDiv.classList.toggle('success-msg');
 						msgDiv.innerHTML += `<p>${getTime()} - ${resFromS3.data.errMsg}</p><br>`;
 					}
 				} else {
-					// if (msgDiv.classList.contains('success-msg')) msgDiv.classList.toggle('success-msg');
 					msgDiv.innerHTML += `<p>${getTime()} - ${resFromTrans.data.errMsg}</p><br>`;
 				}
 			}

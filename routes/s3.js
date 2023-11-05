@@ -38,9 +38,8 @@ async function uploadJsonToS3 (s3, bucketName, objectKey) {
 		if (err) {
 			console.log('Unable to scan directory: ' + err);
 		} 
-		//listing all files using forEach
+
 		files.forEach(function (file) {
-			// Do whatever you want to do with the file
 			console.log(file);
 			fs.unlinkSync(`./tmp/${file}`);
 		});

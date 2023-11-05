@@ -5,7 +5,6 @@ const resolutionCheckBoxes = document.getElementsByClassName('checkbox-resolutio
 const formatCheckBoxes = document.getElementsByClassName('checkbox-format');
 const fileInput = document.getElementById('input-file');
 const dropZone = document.getElementById('drop-area');
-const content = document.getElementById('content');
 const resetBtn = document.getElementById('reset-btn');
 const videoPreview = document.querySelector('video');
 const msgDiv = document.getElementById('msg-div');

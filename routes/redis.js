@@ -14,11 +14,6 @@ AWS.config.update({
 const bucketName = process.env.BUCKET_NAME;
 const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
 
-// Initialize Redis client
-// const redis = new Redis({
-// 	host: 'localhost',
-// 	port: 6379
-// });
 
 const client = redis.createClient();
 
